@@ -1,0 +1,35 @@
+version: '3'
+services:
+  student-api:
+    image: ukwksk/student-api
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: student-api
+    tty: true
+    ports:
+      - 8081:8081
+    environment:
+      - DEV_MODE=false
+      - PG_HOST=student-pg
+      - PG_PORT=5432
+    depends_on:
+      - student-pg
+
+  student-pg:
+    image: postgres:10.6
+    container_name: student-pg
+    environment:
+      POSTGRES_DB: student_api
+      POSTGRES_USER: ukwksk
+      POSTGRES_PASSWORD: ukwksk_pwd
+    command: postgres -c log_destination=stderr -c log_statement=all -c log_connections=on -c log_disconnections=on
+    ports:
+      - 5433:5432
+    volumes:
+      - student-pg-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
+      - ./db/csv:/tmp/db/csv
+
+volumes:
+  student-pg-data:

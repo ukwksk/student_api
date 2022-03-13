@@ -1,0 +1,161 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Student-API
+servers:
+  - url: http://localhost:8081
+paths:
+  "/students":
+    parameters:
+      - name: teacherId
+        in: query
+        description: |
+          検索対象の先生のID指定します。
+        required: true
+        schema:
+          type: number
+          format: int64
+      - name: page
+        in: query
+        description: |
+          表示するページ番号を指定します。
+        schema:
+          type: number
+          format: int64
+          minimum: 0
+      - name: limit
+        in: query
+        description: |
+          ページに表示するデータ数を指定します。
+        schema:
+          type: number
+          format: int64
+          minimum: 1
+          maximum: 100
+      - name: sort
+        in: query
+        description: |
+          ソートキーを指定します。（名前: name | ログインID: loginId）
+        schema:
+          $ref: "#/components/schemas/StudentSearchSortEnum"
+      - name: order
+        in: query
+        description: |
+          sort が指定されている場合の降順・昇順（default: 降順）を指定します。（降順: desc | 昇順: asc）
+        schema:
+          $ref: "#/components/schemas/StudentSearchOrderEnum"
+      - name: name_like
+        in: query
+        description: |
+          名前による部分一致検索。
+        schema:
+          type: string
+      - name: loginId_like
+        in: query
+        description: |
+          ログインIDによる部分一致検索。
+        schema:
+          type: string
+
+    get:
+      summary: 生徒検索
+      operationId: searchStudents
+      tags:
+        - Students
+      responses:
+        '200':
+          description: 検索成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentSearchModel"
+              examples:
+                example:
+                  value:
+                    students:
+                      - id: 1
+                        name: 生徒1
+                        loginId: student_1
+                        classrooms:
+                          - id: 1
+                            name: 特進クラス
+                    totalCount: 1
+        '400':
+          description: "クエリパラメータの値が不正な場合（例: &limit=a&order=x）"
+        '404':
+          description: teacherId に対応する先生が存在しない場合
+        '500':
+          description: 内部エラー
+
+
+components:
+  schemas:
+    StudentSearchSortEnum:
+      type: string
+      enum:
+        - name
+        - loginId
+    StudentSearchOrderEnum:
+      type: string
+      enum:
+        - desc
+        - asc
+
+    StudentSearchModel:
+      description: 生徒検索結果
+      type: object
+      required:
+        - students
+        - totalCount
+      properties:
+        students:
+          type: array
+          uniqueItems: true
+          minItems: 0
+          items:
+            $ref: "#/components/schemas/StudentModel"
+        totalCount:
+          type: number
+          format: int64
+          example: 1
+
+    StudentModel:
+      description: 生徒
+      type: object
+      required:
+        - id
+        - name
+        - loginId
+      properties:
+        id:
+          type: number
+          format: int64
+          example: 1
+        name:
+          type: string
+          minLength: 1
+          example: 生徒1
+        loginId:
+          type: string
+          minLength: 1
+          example: student_1
+        classrooms:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClassroomModel"
+
+    ClassroomModel:
+      description: クラス
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: number
+          format: int64
+          example: 1
+        name:
+          type: string
+          minLength: 1
+          example: 特進クラス
